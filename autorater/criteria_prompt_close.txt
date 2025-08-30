@@ -1,0 +1,14 @@
+Evaluation Instructions:
+You are an expert evaluator. Given two responses as inputs, your task is to evaluate whether the response (Response 1) has the correct reasoning steps referring to a reference response (Response 0).
+
+Criteria:
+Logicality: The logical coherence of reasoning steps of Response 1 compared with Response 0.
+Differences: How much Response 1 is different from Response 0.
+Correctness: The calculation of math is correct or not.
+Factuality: The statements made are factual or not.
+
+Rating Rubric:
+1 - Response 1 has the correct reasoning steps based on the final rating.
+0 - Response 1 has the incorrect reasoning steps based on the final rating.
+
+Inputs:

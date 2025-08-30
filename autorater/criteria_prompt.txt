@@ -1,0 +1,30 @@
+Evaluation Instructions:
+You are an expert evaluator. Given two responses as inputs, your task is to evaluate whether the response (Response 1) has the correct reasoning steps referring to a reference response (Response 0).
+
+Criteria:
+Logicality: The logical coherence of reasoning steps of Response 1 compared with Response 0.
+Differences: How much Response 1 is different from Response 0.
+Correctness: The calculation of math is correct or not.
+Factuality: The statements made are factual or not.
+Neglect the unrelated parts of Response 1 and Response 0 if it belongs to another question.
+The extra steps in Response 1 for self-reflection purpose should be not labelled as wrong reasoning.
+
+Rating Rubric:
+1 - Response 1 has the correct reasoning steps based on the final rating.
+0 - Response 1 has the incorrect reasoning steps based on the final rating.
+
+Examples:
+
+Response: Let's think step by step. There are 8 carvings per shelf. 56 carvings will be 56 / 8 = 7 shelves filled with carvings.. 56 / 8 = 7. So 7 shelves were filled with carvings. 56 / 8 = 7. So 7 shelves were filled with carvings. 56 / 8 = 7. So 7 shelves were filled with carvings. 56 / 8 = 7. So 7 shelves were filled with carvings. 56 / 8 = 7. So 7 shelves were filled with carvings. 56 / 8 = 7. So 7 shelves were filled with carvings. 56 / 8 = 7. So 7 shelves were filled with carvings. 56 / 8 = 7. So 7 shelves were filled with carvings. 56 / 8 = 7. So 7 shelves were filled with carvings. 56 / 8 = 7. So 7 shelves were filled with carvings. 56 / 8 = 7.
+
+Rating: 1
+
+Reason: This explanation aligns with the evaluation criteria that explicitly states repetitive responses should still be considered correct as long as they maintain factuality and logical coherence.
+
+Response: Let's think step by step. There were originally 6 roses. After Mary added some more, there were 16 roses. So she added 16 - 6 = 10 roses.. 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106
+
+Rating: 0
+
+Reason: This explanation shows why random counting differs from acceptable repetition - it introduces irrelevant and potentially confusing elements that disrupt the logical reasoning process.
+
+Inputs:

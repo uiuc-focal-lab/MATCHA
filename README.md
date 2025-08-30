@@ -24,7 +24,12 @@ python inference_emb_attack.py --dataset="gsm8k" --model="llama3-8B" --method="f
 python inference_tok_random_dual.py --dataset="gsm8k" --model="llama3-8B" --method="few_shot_cot" --qes_limit=0 --prompt_path="./basic_cot_prompts/math_word_problems" --random_seed=42 --multipath=1 --basic_cot True
 ```
 
-## Important arguments
+### Run black-box tranfer script
+```shell
+python close_source_transfer.py --dataset="gsm8k" --model="gpt-3.5-turbo" --model2='deepseek' --method="few_shot_cot" --qes_limit=0 --prompt_path="basic_cot_prompts/math_word_problems" --random_seed=42 --multipath=1 --temperature=0.7 --basic_cot True  --api_time_interval=2
+```
+
+### Important arguments
    * `--dataset`: The name of a dataset. `choices = [gsm8k, svamp, aqua, csqa, last_letters, strategyqa, asdiv, singleeq, addsub, multiarith]`.
    * `--model`: open-source model. `choices = [["llama3-8B","mistral", "zephyr", "qwen", "deepseek"]`.
    * `--method`: few-shot-cot or active_cot.

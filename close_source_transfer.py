@@ -135,19 +135,12 @@ def inference_cot(args, question_pool, qes_limit, given_prompt):
 
         # enable self-consistency if multipath > 1
         for path in range(0, args.multipath):
-            # if args.model == 'gpt-3.5-turbo':
             responses = chatgpt_request(model=args.model, message_list=message_list_origin, max_tokens=args.max_length_cot, temperature=args.temperature, sleep=args.api_time_interval)
-            # else:
-                # responses = GPT3_request(model=args.model, input_prompt=prompt_list, max_tokens=args.max_length_cot, time_interval=args.api_time_interval, temperature=args.temperature, stop='\n')
-            
 
             QA = {}
             QA['qes_idx'] = qes['question_idx']
             QA['Q'] = qes['question']
-            # if args.model == 'gpt-3.5-turbo':
             QA['A'] = responses['choices'][0]['message']['content']
-            # else:
-                # QA['A'] = responses['choices'][0]['text']
             QA_record.append(QA)
 
             pred_ans = answer_extraction_close(args, responses)

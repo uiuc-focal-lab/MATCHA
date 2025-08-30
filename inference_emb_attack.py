@@ -7,7 +7,6 @@ from torch.autograd import Variable
 import torch.nn as nn
 import os
 import gc
-from inference_token_attack_dual_opt import *
 
 model_libs = {
     "deepseek": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
@@ -138,9 +137,6 @@ def auto_rater_gpt(args, x_0, x_p):
     # print(prompt)
     message_list = [{"role": "user", "content": prompt}]
 
-    # responses = chatgpt_request(model='gpt-3.5-turbo', message_list=message_list, max_tokens=args.max_length_cot, temperature=args.temperature, sleep=args.api_time_interval)
-    # response = responses['choices'][0]['message']['content']
-
     while True:
         responses = chatgpt_request(model='gpt-3.5-turbo', message_list=message_list, max_tokens=args.max_length_cot, temperature=args.temperature, sleep=args.api_time_interval)
         response = responses['choices'][0]['message']['content']
@@ -200,21 +196,11 @@ def inference_cot_emb_attack(args, question_pool, qes_limit, given_prompt):
         # enable self-consistency if multipath > 1
         for path in range(0, args.multipath):
 
-            # we call the open-source model and return the response
-            
-            # if args.model == 'gpt-3.5-turbo':
-            #     responses = chatgpt_request(model=args.model, message_list=message_list, max_tokens=args.max_length_cot, temperature=args.temperature, sleep=args.api_time_interval)
-            # else:
-            #     responses = GPT3_request(model=args.model, input_prompt=prompt_list, max_tokens=args.max_length_cot, time_interval=args.api_time_interval, temperature=args.temperature, stop='\n')
             responses = return_response(args, input_emb, input_attention_mask, max_len, tokenizer, model)
             
             QA = {}
             QA['qes_idx'] = qes['question_idx']
             QA['Q'] = qes['question']
-            # if args.model == 'gpt-3.5-turbo':
-            #     QA['A'] = responses['choices'][0]['message']['content']
-            # else:
-            #     QA['A'] = responses['choices'][0]['text']
             QA['A'] = responses
             QA_record.append(QA)
 
@@ -278,25 +264,17 @@ def inference_cot_emb_attack(args, question_pool, qes_limit, given_prompt):
             res = tokenizer(' ' + responses, return_tensors="pt")
             for key in res:
                 res[key] = res[key].cuda()
-            # whole = tokenizer(prompt + responses, return_tensors="pt")
-            # for key in whole:
-            #     whole[key] = whole[key].cuda()
-            # attention_mask_whole = whole['attention_mask']
             attention_mask_whole = torch.cat((input_attention_mask, res['attention_mask']), dim=-1)
             # get the input space embeddings without perturbations
             res_emb = get_embeddings(model, res.input_ids)
             whole_emb = torch.cat((input_emb, res_emb), dim=-2)
-            # whole_emb = get_embeddings(model, whole.input_ids)
-            # print(whole_emb.shape)
             epsilon = torch.norm(whole_emb[0], p=float('inf'), dim=1).max() 
-            # print(epsilon)
             epsilon *= args.p_size
             args.alpha = epsilon / 4
 
             # add perturbation to the prompt
             perturbed_input_emb= add_radius_noise_to_embedding(input_emb, 0)
             # get the input space embeddings without perturbations
-            # input_emb_perturb_with_exp = torch.cat((perturbed_input_emb, answer_emb), dim=-2)
             attention_mask_all_perturb = attention_mask_whole
             
             # get the input space embeddings without perturbations
@@ -371,8 +349,6 @@ def inference_cot_emb_attack(args, question_pool, qes_limit, given_prompt):
                         # cache_position=cache_position,
                     )
                 predicted_input = outputs_prompt['logits']
-                # print(length_w_answer, length_w_cot)
-                # print(predicted_w_answer.shape, labels_w_answer.shape)
                 cost = loss(predicted_w_answer[:, length_w_answer:, :], labels_w_answer[:, length_w_answer:, :]) - ((labels_w_answer.shape[1] - length_w_answer) / length_w_answer) * loss(predicted_w_answer[:, :length_w_answer, :], labels_w_answer[:, :length_w_answer, :])
 
                 print(cost)
@@ -410,12 +386,6 @@ def inference_cot_emb_attack(args, question_pool, qes_limit, given_prompt):
                 # if pred_ans_attack == qes['answer'] and (auto_rater(remove_repeated_phrases(x_0_text), remove_repeated_phrases(x_p_text), max_len, tokenizer_judge, model_judge) == 0 or check_all_equations_correct(x_p_text) == 0):
                 if pred_ans_attack == qes['answer'] and (auto_rater_gpt(args, remove_repeated_phrases(x_0_text), remove_repeated_phrases(x_p_text)) == 0 or check_all_equations_correct(x_p_text) == 0):
                     attackable += 1
-                # break
-            # else:
-            #     # update input embedding perturb with exp
-            #     input_emb_all_perturb = torch.cat((input_emb_all_perturb[:,:length_query,:], res_emb), dim=-2)
-            #     print('--------------------')
-            #     continue 
             length_lst.append(step)          
         else:
             wrong_list.append({'idx':qes['question_idx'], 'pred_ans':final_consistent_ans, 'GT':qes['answer']})

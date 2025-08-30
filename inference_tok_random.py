@@ -11,7 +11,6 @@ from copy import deepcopy
 import re
 import random
 from sympy import sympify
-from inference_token_attack_dual_opt import *
 
 
 
@@ -83,16 +82,6 @@ def main():
         with open(path, 'w') as f:
             f.write(json.dumps(QA_record, indent=4))
 
-        # path = f"{args.output_dir}/success_list_{args.dataset}_{args.model}.txt"
-        # # with open(path, 'w') as f:
-        # #     f.write(json.dumps(success_list, indent=4))
-        # orginal_stdout = sys.stdout
-        # with open(path, 'w') as f:
-        #     sys.stdout = f
-        #     for i in success_list:
-        #         print(str(i))
-        # sys.stdout = orginal_stdout
-
 
 def return_response(args, input_emb, attention_mask, max_len, tokenizer, model):
     with torch.inference_mode():
@@ -142,8 +131,7 @@ def token_gradients_x(args, model, input_ids, target_logits, loss, length_w_answ
     logits = model(inputs_embeds=input_embeds).logits
     
     cost = - loss(logits[:, length_w_answer:length_w_cot, :], target_logits[:, length_w_answer:length_w_cot, :])
-    # + args.lbd * loss(logits[:, :length_w_answer, :], target_logits[:, :length_w_answer, :])
-    
+   
     # cost.backward(retain_graph=True)
     print(cost)
     grad = torch.autograd.grad(
@@ -191,7 +179,6 @@ def token_gradients_answer(args, model, input_ids, target_logits, loss):
     
     cost = loss(logits, target_logits)
     
-    # cost.backward(retain_graph=True)
     print(cost)
     grad = torch.autograd.grad(
             cost, one_hot, retain_graph=False, create_graph=False, allow_unused=True
@@ -247,9 +234,6 @@ def auto_rater_gpt(args, x_0, x_p):
 
     # print(prompt)
     message_list = [{"role": "user", "content": prompt}]
-
-    # responses = chatgpt_request(model='gpt-3.5-turbo', message_list=message_list, max_tokens=args.max_length_cot, temperature=args.temperature, sleep=args.api_time_interval)
-    # response = responses['choices'][0]['message']['content']
 
     while True:
         responses = chatgpt_request(model='gpt-3.5-turbo', message_list=message_list, max_tokens=args.max_length_cot, temperature=args.temperature, sleep=args.api_time_interval)
@@ -396,15 +380,10 @@ def inference_cot_token_attack(args, question_pool, qes_limit, given_prompt):
             # input_emb_w_answer = torch.cat((input_emb, answer_emb), dim=-2)
             input_emb_w_answer = get_embeddings(model, input_w_answer.input_ids)
             length_w_answer = input_emb_w_answer.shape[-2]
-            # length_answer = len(tokenizer(value, return_tensors="pt").input_ids[0])
 
             # we get the length of the cot
             x_0_text = return_cot(responses, a)
 
-            # if auto_rater_gpt_single(args, remove_repeated_phrases(x_0_text), remove_repeated_phrases(x_0_text)) == 0 :
-            #     correct -= 1
-            #     continue
-            # print(x_0_text)
             exp = ' ' + x_0_text
             exp = tokenizer(exp, return_tensors="pt")
             for key in exp:
@@ -415,65 +394,13 @@ def inference_cot_token_attack(args, question_pool, qes_limit, given_prompt):
             input_emb_with_exp = torch.cat((input_emb_w_answer, exp_emb), dim=-2)
             length_w_cot = input_emb_with_exp.shape[-2]
 
-            # get whole prompt + response
-            # res = tokenizer(' ' + responses, return_tensors="pt")
-            # for key in res:
-            #     res[key] = res[key].cuda()
             whole = tokenizer(prompt + ' ' + responses, return_tensors="pt")
             for key in whole:
                 whole[key] = whole[key].cuda()
-            # attention_mask_whole = whole['attention_mask']
-            # attention_mask_whole = torch.cat((input_attention_mask, res['attention_mask']), dim=-1)
-            # get the input space embeddings without perturbations
-            # res_emb = get_embeddings(model, res.input_ids)
-            # whole_emb = torch.cat((input_emb, res_emb), dim=-2)
-            # whole_emb = get_embeddings(model, whole.input_ids)
-
-            # add perturbation to the prompt
-            # perturbed_input_emb= add_radius_noise_to_embedding(input_emb, 0)
-            # # get the input space embeddings without perturbations
-            # # input_emb_perturb_with_exp = torch.cat((perturbed_input_emb, answer_emb), dim=-2)
-            # attention_mask_all_perturb = attention_mask_whole
-            
-            # # get the input space embeddings without perturbations
-            # input_emb_all_perturb = torch.cat((perturbed_input_emb, res_emb), dim=-2)
-
-            # get the true logits
-            # outputs_w_answer = model(
-            #             # input_ids=input_ids,
-            #             attention_mask=attention_mask_whole,
-            #             # position_ids=position_ids,
-            #             # past_key_values=past_key_values,
-            #             inputs_embeds=whole_emb,
-            #             # use_cache=False,
-            #             output_attentions=False,
-            #             output_hidden_states=False,
-            #             return_dict=True,
-            #             # cache_position=cache_position,
-            #         )
-            # # print(outputs_w_answer.keys())
-            # labels_w_answer = outputs_w_answer['logits']
-
-            # get the attentions
-            # outputs_prompt = model(
-            #             # input_ids=input_ids,
-            #             attention_mask=attention_mask_w_answer,
-            #             # position_ids=position_ids,
-            #             # past_key_values=past_key_values,
-            #             inputs_embeds=input_emb_w_answer,
-            #             # use_cache=False,
-            #             output_attentions=True,
-            #             output_hidden_states=False,
-            #             return_dict=True,
-            #             # cache_position=cache_position,
-            #         )
-            # labels_input = outputs_prompt['logits']
 
 
             # start attack
             loss = nn.CrossEntropyLoss()
-            # topk = args.topk
-            # topk = int((length_query - length_in_context) * args.topk_ratio)
             topk_swap = args.topk_swap
             perturb_whole = deepcopy(whole)
             add_tok_num = int((length_query - length_in_context) * args.add_ratio)
@@ -490,33 +417,20 @@ def inference_cot_token_attack(args, question_pool, qes_limit, given_prompt):
                 idx = 0
                 old_q = tokenizer.batch_decode(perturb_whole.input_ids[:, length_in_context-1:length_query-2+step], skip_special_tokens=True)
                 while count < topk_swap:
-                    # if idx >= len(rest):
-                    #     break
-
-                # for idx in rest[:topk_swap]:
                     idx = random.randint(0, len(rest)-1)
                     cur_idx = rest[idx] + length_in_context - 1
-                    # old_idx = perturb_whole.input_ids[:, cur_idx]
-                    # sample some random tokens
-                    # Get vocabulary size
                     vocab_size = tokenizer.vocab_size
 
                     # Sample a random token ID
-                    # random_token_id = torch.tensor(1000).view(-1,1).cuda()
                     random_token_id = torch.randint(0, vocab_size, (1,)).view(-1,1).cuda()
-                    # random_token_id = tokenizer.convert_tokens_to_ids('!')
-                    # print(random_token_id)
-                    # new_idx = top_grad_per_token_answer.indices[cur_idx]
-                    # print(perturb_whole.input_ids[:, idx].view(-1, 1).shape)
                     old_token = tokenizer.batch_decode(perturb_whole.input_ids[:, cur_idx].view(-1, 1), skip_special_tokens=True)
                     new_token = tokenizer.batch_decode(torch.tensor(random_token_id).view(-1, 1), skip_special_tokens=True)
                     print(old_token, new_token)
-                    # perturb_whole.input_ids[:, cur_idx] = random_token_id]
-                    # print(perturb_whole.input_ids.shape)
+
                     perturb_whole.input_ids = torch.cat((perturb_whole.input_ids[:, :cur_idx], random_token_id.cuda(), perturb_whole.input_ids[:, cur_idx:]), dim=1)
                     new_q = tokenizer.batch_decode(perturb_whole.input_ids[:, length_in_context-1:length_query-2 + 1 + step], skip_special_tokens=True)
                     print(old_q, new_q)
-                    # not old_token[0].isdigit() and
+
                     if auto_rater_question(old_q[0], new_q[0], max_len, tokenizer_judge, model_judge) > 0:
                         count += 1
                         idx += 1
@@ -527,7 +441,6 @@ def inference_cot_token_attack(args, question_pool, qes_limit, given_prompt):
                     
 
             whole_emb_perturbed = get_embeddings(model, perturb_whole.input_ids)
-            # cur_prompt = prompt[:length_in_context] + new_q
             attention_mask = (whole_emb_perturbed.abs().sum(dim=-1) > 0).int()
 
 
@@ -537,8 +450,6 @@ def inference_cot_token_attack(args, question_pool, qes_limit, given_prompt):
                                 eos_token_id=tokenizer.eos_token_id,
                                 pad_token_id=tokenizer.eos_token_id,
                                 max_new_tokens=max_len, do_sample=False)
-            # input_query = tokenizer.batch_decode(perturb_whole.input_ids[:, :length_query], skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-            # print(input_query)
             print('--------------')
             cur_response = tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
             print(cur_response)
@@ -550,18 +461,9 @@ def inference_cot_token_attack(args, question_pool, qes_limit, given_prompt):
 
             x_p_text = return_cot(cur_response, a)
 
-            # if pred_ans_attack == qes['answer'] and (auto_rater(remove_repeated_phrases(x_0_text), remove_repeated_phrases(x_p_text), max_len, tokenizer_judge, model_judge) == 0 or check_all_equations_correct(x_p_text) == 0):
             if pred_ans_attack == qes['answer'] and (auto_rater_gpt(args, remove_repeated_phrases(x_0_text), remove_repeated_phrases(x_p_text)) == 0 or check_all_equations_correct(x_p_text) == 0):
                 attackable += 1
-                success_list.append({'idx':qes['question_idx'], 'new_question': new_q[0].strip().split('\n')[0], 'old_question': qes['question'], 'answer':qes['answer']})
-                # break
-                # else:
-                #     # update input embedding perturb with exp
-                #     # input_emb_all_perturb = torch.cat((input_emb_all_perturb[:,:length_query,:], res_emb), dim=-2)
-                #     # print('--------------------')
-                #     print('===============')
-                #     # perturb_whole.input_ids = torch.cat((perturb_whole.input_ids[:, :cur_idx], perturb_whole.input_ids[:, cur_idx+1:]), dim=1)
-                #     continue  
+                success_list.append({'idx':qes['question_idx'], 'new_question': new_q[0].strip().split('\n')[0], 'old_question': qes['question'], 'answer':qes['answer']}) 
                              
             length_lst.append(step)       
         else:

@@ -30,9 +30,9 @@ python close_source_transfer.py --dataset="gsm8k" --model="gpt-3.5-turbo" --mode
 ```
 
 ### Important arguments
-   * `--dataset`: The name of a dataset. `choices = [gsm8k, svamp, aqua, csqa, last_letters, strategyqa, asdiv, singleeq, addsub, multiarith]`.
-   * `--model`: open-source model. `choices = [["llama3-8B","mistral", "zephyr", "qwen", "deepseek"]`.
-   * `--method`: few-shot-cot or active_cot.
+   * `--dataset`: The name of a dataset. `choices = [gsm8k, strategyqa, singleeq]`.
+   * `--model`: open-source model. `choices = ["llama3-8B","mistral", "zephyr", "qwen", "deepseek"]`.
+   * `--method`: few-shot-cot.
    * `--qes_limit`: number of test questions.
    * `--prompt_path`: path of prompt file.
 
